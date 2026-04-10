@@ -83,8 +83,8 @@ export const createComplaint = catchAsync(async (req, res, next) => {
 });
 
 // ─── TRACK COMPLAINT BY TRACKING NUMBER (Public) ─────────────────────────────
-export const trackComplaint = catchAsync(async (req, res, next) => {
-  const { trackingNumber } = req.params;
+ export const trackComplaint = catchAsync(async (req, res, next) => {
+  const trackingNumber = req.params.trackingNumber ?? req.query.number;
 
   const complaint = await Complaint.findOne({ trackingNumber })
     .populate('assignedTo', 'name department')

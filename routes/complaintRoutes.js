@@ -30,7 +30,7 @@ router.post(
 );
 
 // Track a complaint by tracking number
-router.get('/track/:trackingNumber', publicLimiter, trackComplaint);
+router.get('/track', publicLimiter, trackComplaint);
 
 // ============ PROTECTED ROUTES (AUTH REQUIRED) ============
 // Everything after this line requires authentication

@@ -159,75 +159,93 @@ export const getDepartments = catchAsync(async (req, res, next) => {
 
 // ==================== SERVICE APPLICATIONS ====================
 
+
 export const applyForService = catchAsync(async (req, res, next) => {
   const service = await Service.findById(req.params.id);
-  
+
   if (!service) {
     return next(new AppError('Service not found', 404));
   }
-  
+
   if (!service.isAvailable) {
     return next(new AppError('This service is currently unavailable', 400));
   }
 
-  const { fullName, phoneNumber, email, applicantDetails, applicationData } = req.body;
+  const {
+    fullName,
+    phoneNumber,
+    email,
+    applicantDetails,
+    applicationData,
+  } = req.body;
 
+  // Validate minimum required fields
   if (!fullName || !phoneNumber) {
     return next(new AppError('Full name and phone number are required', 400));
   }
 
-  const applicationNumber = generateTrackingNumber('APP');
-
-  const applicationData_obj = {
-    applicationNumber,
-    service: service.id,
+  // Build the document — no `user` field for public (unauthenticated) submissions
+  const newApplication = {
+    // applicationNumber is auto-generated in the pre-save hook
+    service:     service._id,
     serviceName: service.name,
-    category: service.category,
+    category:    service.category,
+
     applicantDetails: {
-      name: fullName,
-      email: email || '',
-      phone: phoneNumber,
-      idNumber: applicantDetails?.idNumber || '',
-      address: applicantDetails?.address || {},
+      name:     fullName,
+      email:    email || '',
+      phone:    phoneNumber,
+      idNumber: applicantDetails?.idNumber || '',   // optional — no longer required
+      address:  applicantDetails?.address  || {},
     },
+
     applicationData: applicationData || {},
-    fee: service.fee,
+
+    fee:           service.fee,
     paymentStatus: service.fee > 0 ? 'pending' : 'not-required',
-    status: 'pending',
-    attachments: req.files ? req.files.map(file => ({
-      filename: file.originalname,
-      path: file.path,
-      mimetype: file.mimetype,
-      size: file.size,
-    })) : [],
+    status:        'pending',
+
+    attachments: req.files
+      ? req.files.map((file) => ({
+          filename: file.originalname,
+          path:     file.path,
+          mimetype: file.mimetype,
+          size:     file.size,
+        }))
+      : [],
+
+    // user is intentionally omitted — not required for public submissions
   };
 
-  const application = await ServiceApplication.create(applicationData_obj);
+  const application = await ServiceApplication.create(newApplication);
 
+  // Send confirmation email if provided (non-blocking)
   if (email) {
-    await sendEmail({
+    sendEmail({
       email,
       subject: `Application Received: ${service.name}`,
       template: 'applicationConfirmation',
       data: {
-        name: fullName,
+        name:        fullName,
         serviceName: service.name,
-        applicationId: applicationNumber,
-        fee: service.fee,
+        applicationId: application.applicationNumber,
+        fee:         service.fee,
       },
-    });
+    }).catch((err) =>
+      console.error('[email] applicationConfirmation failed:', err.message)
+    );
   }
 
   res.status(201).json({
     success: true,
     message: 'Application submitted successfully',
     data: {
-      applicationNumber,
-      serviceName: service.name,
-      status: 'pending',
-      fee: service.fee,
-      paymentStatus: service.fee > 0 ? 'pending' : 'not-required',
-      createdAt: application.createdAt,
+      applicationNumber: application.applicationNumber,
+      serviceName:       service.name,
+      status:            'pending',
+      fee:               service.fee,
+      paymentStatus:     service.fee > 0 ? 'pending' : 'not-required',
+      createdAt:         application.createdAt,
     },
   });
 });

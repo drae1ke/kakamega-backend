@@ -4,78 +4,23 @@ import Service from '../models/Service.js';
 
 dotenv.config();
 
+// ─── These category values MUST match what frontend mockData.ts sends ─────────
+// Frontend serviceCategories use these category strings:
+//   "Water & Sanitation", "Infrastructure", "Health", "Education",
+//   "Environment", "Security"
+//
+// The Service model enum is updated to match. See models/Service.js fix.
+
 const services = [
   {
-    name: 'Birth Certificate Application',
-    category: 'Birth Certificate',
-    description: 'Apply for a birth certificate for children born in Kakamega County',
+    name: 'Water Supply & Sanitation Services',
+    category: 'Water & Sanitation',
+    description: 'Water supply, billing, new connections, pipe repairs, and sanitation services for Kakamega County residents.',
     requirements: [
-      'Birth notification from hospital',
-      'Parents\' ID cards',
-      'Marriage certificate (if applicable)',
-      'Completed application form'
-    ],
-    processingTime: '5-7 business days',
-    fee: 500,
-    department: 'Health Services',
-    isAvailable: true,
-  },
-  {
-    name: 'Death Certificate Application',
-    category: 'Death Certificate',
-    description: 'Apply for a death certificate for residents of Kakamega County',
-    requirements: [
-      'Medical certificate of cause of death',
-      'ID of the deceased',
-      'Applicant ID',
-      'Letter from chief/assistant chief'
-    ],
-    processingTime: '3-5 business days',
-    fee: 500,
-    department: 'Health Services',
-    isAvailable: true,
-  },
-  {
-    name: 'Business Permit Application',
-    category: 'Business Permit',
-    description: 'Apply for a single business permit to operate within Kakamega County',
-    requirements: [
+      'National ID or passport',
+      'Proof of residence (utility bill or land title)',
       'Completed application form',
-      'Business registration certificate',
-      'PIN certificate',
-      'ID of business owner',
-      'Location plan/lease agreement'
-    ],
-    processingTime: '7-10 business days',
-    fee: 2500,
-    department: 'Finance',
-    isAvailable: true,
-  },
-  {
-    name: 'Building Permit Application',
-    category: 'Building Permit',
-    description: 'Apply for a permit to construct buildings within Kakamega County',
-    requirements: [
-      'Building plans',
-      'Title deed',
-      'Structural engineer report',
-      'Environmental impact assessment',
-      'Survey map'
-    ],
-    processingTime: '14-21 business days',
-    fee: 5000,
-    department: 'Public Works',
-    isAvailable: true,
-  },
-  {
-    name: 'Water Connection Application',
-    category: 'Water Connection',
-    description: 'Apply for water connection in Kakamega County',
-    requirements: [
-      'Title deed/land ownership proof',
-      'ID of applicant',
-      'Location map',
-      'Completed application form'
+      'Location sketch/map',
     ],
     processingTime: '7-14 business days',
     fee: 3000,
@@ -83,33 +28,73 @@ const services = [
     isAvailable: true,
   },
   {
-    name: 'Land Rates Payment & Clearance',
-    category: 'Land Rates',
-    description: 'Pay land rates and obtain clearance certificate',
+    name: 'Roads & Infrastructure Services',
+    category: 'Infrastructure',
+    description: 'Pothole repairs, road maintenance, street lighting installation, and signage requests.',
     requirements: [
-      'Title deed',
-      'Current land rates statement',
-      'Previous payment receipts',
-      'ID of property owner'
+      'National ID',
+      'Location description or GPS coordinates',
+      'Photographs of the issue (optional)',
     ],
-    processingTime: '2-3 business days',
+    processingTime: '14-30 business days',
     fee: 0,
-    department: 'Lands & Housing',
+    department: 'Public Works',
     isAvailable: true,
   },
   {
-    name: 'Marriage Certificate Application',
-    category: 'Marriage Certificate',
-    description: 'Apply for marriage certificate in Kakamega County',
+    name: 'Health Services',
+    category: 'Health',
+    description: 'Public health services, hospital referrals, vaccination programs, and medical facility support.',
     requirements: [
-      'Marriage license',
-      'IDs of both spouses',
-      'Passport photos',
-      'Witness statements'
+      'National ID or birth certificate',
+      'Health facility referral letter (if applicable)',
     ],
-    processingTime: '7-10 business days',
-    fee: 1000,
-    department: 'Social Services',
+    processingTime: '3-7 business days',
+    fee: 0,
+    department: 'Health Services',
+    isAvailable: true,
+  },
+  {
+    name: 'Education Support Services',
+    category: 'Education',
+    description: 'School bursaries, ECD program enrollment, school infrastructure support, and learning materials.',
+    requirements: [
+      'National ID of parent/guardian',
+      "Student's birth certificate",
+      'School admission letter',
+      'Proof of residence',
+    ],
+    processingTime: '7-21 business days',
+    fee: 0,
+    department: 'Education',
+    isAvailable: true,
+  },
+  {
+    name: 'Waste Management & Collection',
+    category: 'Environment',
+    description: 'Garbage collection scheduling, disposal site requests, and environmental conservation programs.',
+    requirements: [
+      'National ID',
+      'Proof of residence or business permit',
+      'Location description',
+    ],
+    processingTime: '3-7 business days',
+    fee: 500,
+    department: 'Environment',
+    isAvailable: true,
+  },
+  {
+    name: 'County Security & Enforcement',
+    category: 'Security',
+    description: 'County enforcement patrols, security incident reporting, and public order services.',
+    requirements: [
+      'National ID',
+      'Incident description',
+      'Location and time of incident',
+    ],
+    processingTime: '1-3 business days',
+    fee: 0,
+    department: 'General Administration',
     isAvailable: true,
   },
 ];
@@ -117,19 +102,33 @@ const services = [
 const seedServices = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    console.log('✅ Connected to MongoDB\n');
 
-    // Clear existing services
-    await Service.deleteMany({});
-    console.log('Cleared existing services');
+    // Wipe existing services to avoid duplicates on re-seed
+    const deleted = await Service.deleteMany({});
+    console.log(`🗑️  Cleared ${deleted.deletedCount} existing services\n`);
 
-    // Insert new services
-    await Service.insertMany(services);
-    console.log(`✅ ${services.length} services seeded successfully`);
+    const inserted = await Service.insertMany(services);
+    console.log(`✅ ${inserted.length} services seeded successfully:\n`);
 
-    process.exit();
+    inserted.forEach((s) => {
+      console.log(`   • [${s.category}] ${s.name}  (${s.fee > 0 ? `KES ${s.fee}` : 'Free'})`);
+    });
+
+    console.log('\n─────────────────────────────────────────────────────');
+    console.log('ℹ️  These category values match frontend mockData.ts');
+    console.log('   Service requests will now resolve correctly.');
+    console.log('─────────────────────────────────────────────────────\n');
+
+    process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding services:', error.message);
+    console.error('❌ Seed failed:', error.message);
+    if (error.errors) {
+      // Print mongoose validation errors clearly
+      Object.entries(error.errors).forEach(([field, err]) => {
+        console.error(`   Field "${field}": ${err.message}`);
+      });
+    }
     process.exit(1);
   }
 };
