@@ -39,7 +39,7 @@ router.post(
   applyForService
 );
 
-router.get('/applications/track/:trackingNumber', publicLimiter, trackApplication);
+router.get('/applications/track/:trackingNumber(*)', publicLimiter, trackApplication);
 
 // ─── PROTECTED ROUTES (staff only) ──────────────────────────────────────────
 router.use(protect);

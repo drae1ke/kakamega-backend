@@ -30,11 +30,11 @@ router.post(
 );
 
 // Track a complaint by tracking number
-router.get('/track', publicLimiter, trackComplaint);
+//router.get('/track', publicLimiter, trackComplaint);
+router.get('/track/:trackingNumber(*)', trackComplaint);
 
 // ============ PROTECTED ROUTES (AUTH REQUIRED) ============
 // Everything after this line requires authentication
-router.use(protect);
 
 // Staff routes
 router.get('/all', staffLimiter, authorize('admin', 'officer'), getAllComplaints);
