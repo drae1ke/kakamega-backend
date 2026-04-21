@@ -4,7 +4,7 @@ dotenv.config();
 export const config = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
-  portalUrl: process.env.PORTAL_URL || 'https://kakamegaconnecct.netlify.app',
+  portalUrl: process.env.PORTAL_URL || 'https://kakamegaconnect.netlify.app',
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpire: process.env.JWT_EXPIRE,
