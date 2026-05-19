@@ -1,4 +1,5 @@
 import Complaint from '../models/Complaint.js';
+import ServiceApplication from '../models/ServiceApplication.js';
 import AppError from '../utils/AppError.js';
 import { catchAsync } from '../utils/catchAsync.js';
 import { sendEmail } from '../utils/emailService.js';
@@ -86,31 +87,62 @@ export const createComplaint = catchAsync(async (req, res, next) => {
  export const trackComplaint = catchAsync(async (req, res, next) => {
   const trackingNumber = req.params.trackingNumber ?? req.query.number;
 
+  if (!trackingNumber) {
+    return next(new AppError('Please provide a tracking number.', 400));
+  }
+
   const complaint = await Complaint.findOne({ trackingNumber })
     .populate('assignedTo', 'name department')
     .select('-attachments -resolutionNotes -__v');
 
-  if (!complaint) {
-    return next(new AppError('Complaint not found. Please check your tracking number.', 404));
+  if (complaint) {
+    return res.status(200).json({
+      success: true,
+      data: {
+        type: 'complaint',
+        trackingNumber: complaint.trackingNumber,
+        status: complaint.status,
+        title: complaint.title,
+        category: complaint.category,
+        description: complaint.description,
+        location: complaint.location,
+        submittedAt: complaint.createdAt,
+        lastUpdated: complaint.updatedAt,
+        feedback: complaint.feedback,
+        assignedTo: complaint.assignedTo ? {
+          name: complaint.assignedTo.name,
+          department: complaint.assignedTo.department
+        } : null,
+        resolvedAt: complaint.status === 'resolved' ? complaint.resolvedAt : null,
+      },
+    });
+  }
+
+  const application = await ServiceApplication.findOne({ applicationNumber: trackingNumber })
+    .populate('service', 'name category processingTime')
+    .select('-attachments -officerNotes -__v');
+
+  if (!application) {
+    return next(new AppError('Request not found. Please check your tracking number.', 404));
   }
 
   res.status(200).json({
     success: true,
     data: {
-      trackingNumber: complaint.trackingNumber,
-      status: complaint.status,
-      title: complaint.title,
-      category: complaint.category,
-      description: complaint.description,
-      location: complaint.location,
-      submittedAt: complaint.createdAt,
-      lastUpdated: complaint.updatedAt,
-      feedback: complaint.feedback,
-      assignedTo: complaint.assignedTo ? {
-        name: complaint.assignedTo.name,
-        department: complaint.assignedTo.department
-      } : null,
-      resolvedAt: complaint.status === 'resolved' ? complaint.resolvedAt : null,
+      type: 'application',
+      trackingNumber: application.applicationNumber,
+      applicationNumber: application.applicationNumber,
+      status: application.status,
+      title: application.serviceName,
+      serviceName: application.serviceName,
+      category: application.category,
+      submittedAt: application.createdAt,
+      lastUpdated: application.updatedAt,
+      remarks: application.remarks,
+      paymentStatus: application.paymentStatus,
+      fee: application.fee,
+      processedAt: application.processedAt,
+      completedAt: application.completedAt,
     },
   });
 });

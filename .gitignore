@@ -3,5 +3,4 @@ logs
 *.log
 dist
 coverage
-.env
 .idea

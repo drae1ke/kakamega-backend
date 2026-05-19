@@ -3,6 +3,7 @@ import { protect, authorize } from '../middleware/auth.js';
 import {
   getDashboardStats,
   getRecentActivity,
+  getAllRequests,
   getSystemHealth,
 } from '../controllers/adminController.js';
 
@@ -13,6 +14,7 @@ router.use(protect, authorize('admin'));
 
 router.get('/dashboard', getDashboardStats);
 router.get('/activity', getRecentActivity);
+router.get('/requests', getAllRequests);
 router.get('/health', getSystemHealth);
 
 export default router;
